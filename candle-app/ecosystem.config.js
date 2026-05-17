@@ -4,7 +4,7 @@ module.exports = {
       name: 'vibe-trader',
       script: 'npx',
       args: 'tsx src/server.ts',
-      cwd: '/opt/vibe-trader/backend',
+      cwd: '/opt/vibe-trader/candle-app/backend',
       env: {
         NODE_ENV: 'production',
         PORT: 3001,
