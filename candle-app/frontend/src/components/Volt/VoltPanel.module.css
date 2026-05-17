@@ -1,0 +1,308 @@
+/* ── VoltPanel ────────────────────────────────────────────────────────────── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg0);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg1);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text1);
+  text-transform: uppercase;
+}
+
+.subtitle {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+.loading {
+  padding: 20px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--text2);
+}
+
+/* ── Divider ─────────────────────────────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* ── Session summary cards ──────────────────────────────────────────────── */
+.sessionGrid {
+  display: flex;
+  gap: 4px;
+  padding: 10px 10px 8px;
+  flex-shrink: 0;
+}
+
+.sessionCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 6px 7px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: var(--bg1);
+}
+
+.sessionLabel {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.sessionStat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sessionStatLabel {
+  font-size: 7px;
+  color: var(--text2);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.sessionStatVal {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* ── Heatmap ─────────────────────────────────────────────────────────────── */
+.heatmapWrap {
+  overflow-x: auto;
+  flex-shrink: 0;
+  padding: 8px 0 6px;
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.heatmapWrap::-webkit-scrollbar { height: 4px; }
+.heatmapWrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.heatmapWrap::-webkit-scrollbar-track { background: transparent; }
+
+.heatmap {
+  display: grid;
+  /* col 0 = row label (fixed), cols 1-24 = hour cells (fixed 18px each) */
+  grid-template-columns: 68px repeat(24, 18px);
+  gap: 2px;
+  padding: 0 10px;
+  width: max-content;
+}
+
+/* Hour header */
+.hourHeader {
+  font-size: 8px;
+  font-family: var(--font-mono);
+  text-align: center;
+  padding: 0 0 3px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Row label */
+.rowLabel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 8px;
+  height: 20px;
+}
+
+.rowLabelMain {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text1);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.rowLabelSub {
+  font-size: 7px;
+  color: var(--text2);
+  letter-spacing: 0.03em;
+  margin-top: 1px;
+}
+
+/* Data cells — pure color blocks, no text */
+.cell {
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  cursor: default;
+  transition: transform 0.08s, border-color 0.08s;
+}
+
+.cell:hover {
+  transform: scale(1.15);
+  z-index: 1;
+}
+
+.cellHovered {
+  border-color: rgba(255,255,255,0.4) !important;
+  transform: scale(1.15);
+  z-index: 1;
+}
+
+/* ── Tooltip / hover detail ──────────────────────────────────────────────── */
+.tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 10px 0;
+  padding: 10px 12px;
+  border-radius: 5px;
+  background: var(--bg1);
+  border: 1px solid var(--border-hi);
+  flex-shrink: 0;
+}
+
+.tooltipHour {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tooltipGrid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 16px;
+}
+
+.tooltipLabel {
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.tooltipVal {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text0);
+  text-align: right;
+}
+
+/* ── Backfill section ────────────────────────────────────────────────────── */
+.backfillSection {
+  padding: 10px 12px 14px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sectionLabel {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text2);
+  text-transform: uppercase;
+}
+
+.backfillRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.daysSelect {
+  flex: 1;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text1);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  padding: 5px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.daysSelect:hover:not(:disabled) { border-color: var(--border-hi); }
+.daysSelect:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.backfillBtn {
+  background: oklch(0.22 0.10 250);
+  border: 1px solid var(--blue);
+  color: var(--blue);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.backfillBtn:hover:not(:disabled) {
+  background: var(--blue);
+  color: #080d14;
+}
+
+.backfillBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.refreshBtn {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 15px;
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.refreshBtn:hover:not(:disabled) { color: var(--text0); border-color: var(--border-hi); }
+.refreshBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.backfillMsg {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--up);
+  line-height: 1.6;
+}
+
+.backfillHint {
+  font-size: 9px;
+  color: var(--text2);
+  line-height: 1.6;
+}

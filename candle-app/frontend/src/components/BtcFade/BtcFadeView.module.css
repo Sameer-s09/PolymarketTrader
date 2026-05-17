@@ -1,0 +1,298 @@
+/* ── BtcFade shell ─────────────────────────────────────────────────────────── */
+.view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--bg0);
+  overflow: hidden;
+}
+
+/* ── Sub-tab bar ──────────────────────────────────────────────────────────── */
+.subTabBar {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  flex-shrink: 0;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  gap: 4px;
+}
+
+.subTab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0 14px;
+  height: 36px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.03em;
+  margin-bottom: -1px;   /* overlap the bar border */
+}
+.subTab:hover { color: var(--text0); }
+.subTabActive  { color: var(--blue) !important; border-bottom-color: var(--blue) !important; }
+
+.subTabSpacer { flex: 1; }
+.subTabHint {
+  font-size: 10px;
+  color: var(--text2);
+  letter-spacing: 0.03em;
+}
+
+/* ── Content area ─────────────────────────────────────────────────────────── */
+.content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Chart ────────────────────────────────────────────────────────────────── */
+.chartWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.chartInfoBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  height: 32px;
+}
+
+.infoLabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text1);
+  letter-spacing: 0.04em;
+}
+
+.streakRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.dotGreen { background: #3fb950; }
+.dotRed   { background: #f85149; }
+
+.streakText {
+  font-size: 11px;
+  color: var(--text2);
+  margin-left: 4px;
+}
+
+.badgeS5 {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0,212,255,.15);
+  color: #00d4ff;
+  border: 1px solid rgba(0,212,255,.3);
+  letter-spacing: 0.04em;
+}
+.badgeS4 {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(227,179,65,.15);
+  color: #e3b341;
+  border: 1px solid rgba(227,179,65,.3);
+  letter-spacing: 0.04em;
+}
+.badgeWatch {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(139,148,158,.1);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+
+.legend {
+  display: flex;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: auto;
+}
+.legendS4 { color: #e3b341; }
+.legendS5 { color: #00d4ff; }
+
+.infoUpdated {
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.chartContainer {
+  flex: 1;
+  width: 100%;
+}
+
+.chartOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--text2);
+  background: rgba(13,17,23,.7);
+  pointer-events: none;
+}
+
+/* ── Journal ──────────────────────────────────────────────────────────────── */
+.journalWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 16px;
+  gap: 14px;
+}
+
+.statRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.statCard {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 120px;
+}
+.statLabel {
+  font-size: 9px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+}
+.statValue {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text0);
+}
+.statSub {
+  font-size: 9px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.filterBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 11px;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.filterBtn:hover { border-color: var(--blue-dim); color: var(--text0); }
+.filterActive {
+  background: var(--blue-glow) !important;
+  border-color: var(--blue-dim) !important;
+  color: var(--blue) !important;
+}
+
+.filterCount {
+  font-size: 10px;
+  color: var(--text2);
+  margin-left: auto;
+}
+
+.tableWrap {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg1);
+  font-size: 12px;
+}
+.table thead th {
+  background: #1c2128;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 10px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.table tbody tr { border-bottom: 1px solid var(--border); }
+.table tbody tr:last-child { border-bottom: none; }
+.table tbody tr:hover { background: rgba(255,255,255,.025); }
+.table tbody tr[data-result="WIN"]  td:first-child { border-left: 3px solid #3fb950; }
+.table tbody tr[data-result="LOSS"] td:first-child { border-left: 3px solid #f85149; }
+.table tbody tr[data-result="pending"] td:first-child { border-left: 3px solid #e3b341; }
+.table tbody td { padding: 8px 12px; white-space: nowrap; font-family: var(--font-mono); }
+
+.tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: var(--font-sans);
+}
+.tagS4   { background: rgba(0,212,255,.12); color: #00d4ff; }
+.tagS5   { background: rgba(255,107,53,.12); color: #ff6b35; }
+.tagUp   { background: rgba(63,185,80,.12);  color: #3fb950; }
+.tagDown { background: rgba(248,81,73,.12);  color: #f85149; }
+.tagWin  { background: rgba(63,185,80,.15);  color: #3fb950; }
+.tagLoss { background: rgba(248,81,73,.15);  color: #f85149; }
+.tagDoji { background: rgba(227,179,65,.12); color: #e3b341; }
+.tagPending { background: rgba(227,179,65,.1); color: #e3b341; }
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text2);
+  font-size: 13px;
+}

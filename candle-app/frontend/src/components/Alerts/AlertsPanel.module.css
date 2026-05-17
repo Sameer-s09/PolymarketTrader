@@ -1,0 +1,108 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg1);
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text1);
+  text-transform: uppercase;
+}
+
+.count {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text2);
+  flex: 1;
+}
+
+.clearBtn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.clearBtn:hover {
+  color: var(--dn);
+  border-color: var(--dn);
+}
+
+.empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--bg2);
+  border-left: 2px solid transparent;
+  transition: background 0.1s;
+}
+
+.row:hover {
+  background: var(--bg1);
+}
+
+.rowTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rowTitle {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowTime {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text2);
+  flex-shrink: 0;
+}
+
+.rowBody {
+  font-size: 9px;
+  color: var(--text2);
+  font-family: var(--font-mono);
+  line-height: 1.4;
+}

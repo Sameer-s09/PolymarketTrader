@@ -1,0 +1,251 @@
+.topbar {
+  height: 44px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Generic divider cell */
+.cell {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border-right: 1px solid var(--border);
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.logoCell {
+  width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.symbolCell {
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.symbolName {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text0);
+  letter-spacing: 0.05em;
+}
+.symbolSub {
+  font-size: 8px;
+  color: var(--text2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.liveBadge {
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--blue-glow);
+  border: 1px solid var(--blue-dim);
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--blue);
+  letter-spacing: 0.08em;
+}
+
+.priceCell {
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.price {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  transition: color 0.15s;
+}
+.priceSub {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.change {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+.changeDelta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text2);
+}
+
+.statCell {
+  padding: 0 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.statLabel {
+  font-size: 8px;
+  color: var(--text2);
+  letter-spacing: 0.10em;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.statVal {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text1);
+}
+
+.spacer { flex: 1; }
+
+/* Alert toggles */
+.alertGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px;
+  border-right: 1px solid var(--border);
+}
+.alertBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.15s, border-color 0.15s;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.alertBtn:hover { opacity: 0.75; }
+.alertBtn.alertOn { opacity: 1; border-color: var(--blue); }
+
+/* Session pill */
+.pill {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+}
+.pillAmber  { background: oklch(0.12 0.05 80);  color: var(--gold);  border-color: oklch(0.30 0.10 80 / 0.4); }
+.pillBlue   { background: var(--blue-glow);      color: var(--blue);  border-color: var(--blue-dim); }
+.pillOrange { background: oklch(0.12 0.06 50);   color: oklch(0.72 0.18 50);  border-color: oklch(0.35 0.12 50 / 0.4); }
+.pillPurple { background: oklch(0.12 0.05 280);  color: oklch(0.72 0.13 280); border-color: oklch(0.35 0.10 280 / 0.4); }
+.pillMuted  { background: transparent;           color: var(--text2); border-color: var(--border); }
+
+.offline {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+
+/* Clock cells (right side) */
+.clocksCell {
+  padding: 0 16px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.clockItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.clockCity {
+  font-size: 8px;
+  color: var(--text2);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+.clockTime {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text1);
+}
+
+/* Countdown cells */
+.countdownsCell {
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-left: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.cdLabel {
+  font-size: 7px;
+  font-weight: 700;
+  color: var(--text2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cdValue {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Main tab switcher */
+.mainTabGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 10px;
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.mainTabBtn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.mainTabBtn:hover {
+  color: var(--text0);
+  border-color: var(--border);
+}
+.mainTabActive {
+  color: var(--blue) !important;
+  border-color: var(--blue-dim) !important;
+  background: var(--blue-glow) !important;
+}

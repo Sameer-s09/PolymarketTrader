@@ -1,0 +1,149 @@
+.panel { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.header {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg1);
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  flex-shrink: 0;
+}
+
+.tabBtns { display: flex; gap: 0; }
+.tabBtn {
+  font-size: 9px; padding: 4px 10px; letter-spacing: 0.08em;
+  background: none; border: none; border-bottom: 1px solid transparent;
+  color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 4px;
+}
+.tabBtn:hover { color: var(--text1); }
+.tabActive { color: var(--blue); border-bottom-color: var(--blue); }
+
+.calCount {
+  font-size: 8px; background: var(--blue-dim); color: var(--blue);
+  padding: 0 4px; border-radius: 8px; line-height: 14px;
+}
+
+.filters { display: flex; gap: 3px; }
+.filterBtn {
+  font-size: 8px; padding: 2px 7px; border-radius: 3px;
+  background: none; border: 1px solid var(--border); color: var(--text2);
+  cursor: pointer; letter-spacing: 0.05em;
+}
+.filterBtn:hover { color: var(--text1); border-color: var(--border-hi); }
+.filterActive { border-color: var(--blue-dim); color: var(--blue); background: var(--bg2); }
+
+/* ── News list ───────────────────────────────────────────────────────────── */
+.list { flex: 1; overflow-y: auto; padding: 5px; display: flex; flex-direction: column; gap: 4px; }
+.empty { padding: 24px 16px; text-align: center; font-size: 10px; color: var(--text2); line-height: 1.6; }
+
+.newsCard {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 5px; padding: 7px 9px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.old { opacity: 0.45; }
+
+.newsHeader { display: flex; align-items: center; gap: 5px; }
+.newsImpact {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.08em;
+  padding: 2px 6px; border-radius: 3px;
+}
+.newsSentiment { font-size: 9px; letter-spacing: 0.05em; }
+.newsSource { font-size: 8px; color: var(--blue); margin-left: auto; }
+.newsTime { font-size: 8px; color: var(--text2); font-family: var(--font-mono); }
+
+.newsHeadline {
+  font-size: 11px; color: var(--text1); line-height: 1.45; text-decoration: none;
+}
+.newsHeadline:hover { color: var(--text0); text-decoration: underline; }
+
+/* ── Calendar ────────────────────────────────────────────────────────────── */
+.calList { flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+
+.calSection { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.calSectionLabel {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.12em;
+  color: var(--text2); padding: 2px 4px; margin-bottom: 2px; text-transform: uppercase;
+}
+
+/* NOW divider */
+.nowDivider {
+  display: flex; align-items: center; gap: 8px;
+  margin: 6px 0;
+}
+.nowDivider::before, .nowDivider::after {
+  content: ''; flex: 1; height: 1px; background: var(--blue); opacity: 0.35;
+}
+.nowDividerLabel {
+  font-size: 9px; font-weight: 700; color: var(--blue);
+  letter-spacing: 0.1em; white-space: nowrap;
+}
+
+/* Event card */
+.calCard {
+  border-radius: 5px; padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 5px;
+  border: 1px solid var(--border);
+}
+.calCardPast {
+  background: var(--bg1); opacity: 0.65;
+}
+.calCardUpcoming {
+  background: var(--bg2); border-color: var(--border-hi);
+}
+
+.calCardHeader {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+
+.calImpactBadge {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.1em;
+  padding: 2px 7px; border-radius: 3px;
+}
+
+.calTime {
+  font-size: 10px; color: var(--text1); font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+}
+
+.calCountdown {
+  font-size: 9px; color: var(--text2);
+  background: var(--bg2); padding: 1px 6px; border-radius: 3px;
+  border: 1px solid var(--border);
+}
+.calCountdownHot {
+  color: var(--gold); border-color: oklch(0.30 0.10 80 / 0.4); background: oklch(0.12 0.05 80);
+}
+
+.calBeatMiss {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.06em;
+  padding: 1px 6px; border-radius: 3px; margin-left: auto;
+}
+
+.calEventName {
+  font-size: 11px; color: var(--text0); line-height: 1.35; font-weight: 500;
+}
+.calCardPast .calEventName { color: var(--text2); }
+
+/* Data row: ACTUAL / ESTIMATE / PREV */
+.calDataRow {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.calDataCell {
+  display: flex; flex-direction: column; gap: 1px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 3px; padding: 4px 8px; min-width: 54px;
+}
+.calDataLabel {
+  font-size: 7px; font-weight: 700; letter-spacing: 0.1em; color: var(--text2); text-transform: uppercase;
+}
+.calDataVal {
+  font-size: 12px; font-weight: 600; color: var(--text1);
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+}
+.calDataValMuted {
+  font-size: 12px; font-weight: 500; color: var(--text2);
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+}
+
+/* Beat/miss colours (shared) */
+.beat { color: var(--up) !important; }
+.miss { color: var(--dn) !important; }

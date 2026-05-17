@@ -1,0 +1,68 @@
+:root {
+  /* Backgrounds */
+  --bg0: oklch(0.07 0.012 240);   /* #080d14 — deepest */
+  --bg1: oklch(0.10 0.012 240);   /* #0d1420 — panels / bars */
+  --bg2: oklch(0.13 0.012 240);   /* #121a28 — cards / inputs */
+  --bg3: oklch(0.17 0.010 240);   /* #1a2233 — hover fills */
+
+  /* Borders */
+  --border:    oklch(0.22 0.015 240);  /* #233047 */
+  --border-hi: oklch(0.30 0.020 240);  /* #304060 */
+
+  /* Text */
+  --text0: oklch(0.95 0.005 240);  /* #eef0f5 — primary */
+  --text1: oklch(0.72 0.008 240);  /* #a8b0c0 — secondary */
+  --text2: oklch(0.50 0.010 240);  /* #647080 — muted */
+
+  /* Up (bull green) */
+  --up:      oklch(0.68 0.18 145);
+  --up-dim:  oklch(0.45 0.14 145);
+  --up-glow: oklch(0.68 0.18 145 / 0.18);
+
+  /* Down (bear red) */
+  --dn:      oklch(0.58 0.20 15);
+  --dn-dim:  oklch(0.40 0.16 15);
+  --dn-glow: oklch(0.58 0.20 15 / 0.18);
+
+  /* Blue (chrome / active) */
+  --blue:      oklch(0.62 0.16 240);
+  --blue-dim:  oklch(0.40 0.14 240);
+  --blue-glow: oklch(0.62 0.16 240 / 0.18);
+
+  /* Gold */
+  --gold: oklch(0.78 0.14 80);
+
+  /* Typography */
+  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg0);
+}
+
+button { font-family: var(--font-sans); }
+input  { font-family: var(--font-mono); }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
+
+@keyframes pulse-up {
+  0%,100% { box-shadow: 0 0 0 0 var(--up-glow); }
+  50%      { box-shadow: 0 0 10px 3px var(--up-glow); }
+}
+@keyframes pulse-dn {
+  0%,100% { box-shadow: 0 0 0 0 var(--dn-glow); }
+  50%      { box-shadow: 0 0 10px 3px var(--dn-glow); }
+}
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

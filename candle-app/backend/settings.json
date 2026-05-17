@@ -1,0 +1,18 @@
+{
+  "defaultStake": 5,
+  "virtualBalance": 100,
+  "proactiveMode": false,
+  "proactiveMinScore": 6,
+  "showBodyPct": true,
+  "showOddsChips": true,
+  "showCLabels": true,
+  "showSessionBands": {
+    "asia": true,
+    "london": true,
+    "overlap": true,
+    "ny": true
+  },
+  "claudeApiKey": "",
+  "cryptoPanicApiKey": "",
+  "finnhubApiKey": "d7kglf1r01qiqbcuag50d7kglf1r01qiqbcuag5g"
+}

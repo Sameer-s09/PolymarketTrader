@@ -1,0 +1,55 @@
+.bar {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  background: var(--bg1);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 8px;
+  gap: 2px;
+}
+
+.tab {
+  height: 100%;
+  padding: 0 10px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  color: var(--border-hi);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tab:hover {
+  color: var(--text2);
+}
+
+.tab.active {
+  color: var(--text1);
+  border-bottom-color: var(--blue);
+  margin-bottom: -1px;
+}
+
+.log {
+  flex: 1;
+  padding: 0 12px;
+  overflow: hidden;
+}
+
+.logText {
+  font-size: 9px;
+  color: var(--border-hi);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}

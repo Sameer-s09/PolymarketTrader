@@ -1,0 +1,42 @@
+.nav {
+  width: 44px;
+  background: var(--bg1);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.btn {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text2);
+  transition: color 0.15s, background 0.15s;
+}
+
+.btn:hover {
+  background: var(--bg3);
+  color: var(--text1);
+}
+
+.btn.active {
+  color: var(--blue);
+  background: var(--blue-glow);
+}
+
+.divider {
+  width: 20px;
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}

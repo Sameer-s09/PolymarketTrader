@@ -1,0 +1,194 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+}
+
+.emptyText {
+  font-size: 10px;
+  color: var(--text2);
+}
+
+.oddsRow {
+  display: flex;
+  gap: 8px;
+}
+
+.oddsCard {
+  flex: 1;
+  border-radius: 6px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid transparent;
+}
+
+.up {
+  background: var(--up-glow);
+  border-color: var(--up-dim);
+}
+
+.dn {
+  background: var(--dn-glow);
+  border-color: var(--dn-dim);
+}
+
+.oddsDir {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text2);
+}
+
+.up .oddsDir { color: var(--up); }
+.dn .oddsDir { color: var(--dn); }
+
+.oddsNum {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: var(--font-mono);
+  color: var(--text1);
+}
+
+.up .oddsNum { color: var(--up); }
+.dn .oddsNum { color: var(--dn); }
+
+.oddsUnit {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.oddsPayout {
+  font-size: 10px;
+  color: var(--text2);
+  font-weight: 600;
+}
+
+.meta {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.metaItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 4px;
+  border-right: 1px solid var(--border);
+  gap: 2px;
+}
+
+.metaItem:last-child {
+  border-right: none;
+}
+
+.metaLabel {
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text2);
+  text-transform: uppercase;
+}
+
+.metaVal {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text1);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.progressBar {
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--blue);
+  border-radius: 1px;
+  transition: width 0.5s linear;
+}
+
+.mockBtns {
+  display: flex;
+  gap: 6px;
+}
+
+.mockBtn {
+  flex: 1;
+  height: 30px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.mockBtn:disabled { opacity: 0.4; cursor: default; }
+
+.mockUp {
+  background: var(--up-glow);
+  border-color: var(--up-dim);
+  color: var(--up);
+}
+
+.mockDn {
+  background: var(--dn-glow);
+  border-color: var(--dn-dim);
+  color: var(--dn);
+}
+
+.slug {
+  font-size: 7px;
+  color: var(--border-hi);
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
+/* Edge analysis */
+.edgeCard {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.edgeTitle { font-size: 8px; color: var(--text2); letter-spacing: 0.08em; margin-bottom: 5px; text-transform: uppercase; }
+.edgeRow { display: flex; align-items: center; justify-content: space-between; }
+.edgeLabel { font-size: 9px; color: var(--text2); }
+.edgeVal { font-size: 11px; font-weight: 700; font-family: var(--font-mono); }
+.edgePos { color: var(--up); }
+.edgeNeg { color: var(--dn); }
+.edgeNeutral { color: var(--blue); }
+.edgeSub { font-size: 8px; color: var(--text2); margin-top: 2px; }
+.edgeDivider { height: 1px; background: var(--border); margin: 5px 0; }
+
+/* Odds drift */
+.driftSection { }
+.driftTitle { font-size: 8px; color: var(--text2); letter-spacing: 0.08em; margin-bottom: 5px; }
+.driftRow {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 3px;
+}
+.driftLabel { font-size: 9px; color: var(--blue); width: 20px; }
+.driftBar { flex: 1; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; position: relative; }
+.driftUp { height: 100%; background: var(--up-dim); border-radius: 3px; position: absolute; left: 0; top: 0; }
+.driftDown { height: 100%; background: var(--dn-dim); border-radius: 3px; position: absolute; right: 0; top: 0; }
+.driftVals { font-size: 9px; color: var(--text2); width: 54px; text-align: right; white-space: nowrap; font-family: var(--font-mono); }

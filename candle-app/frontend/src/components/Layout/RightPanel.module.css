@@ -1,0 +1,78 @@
+.panel {
+  /* width set inline via draggable state */
+  background: var(--bg1);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.resizeHandle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background 0.15s;
+}
+.resizeHandle:hover {
+  background: var(--blue-glow);
+}
+
+.tabBar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.tab {
+  flex: 1;
+  height: 32px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+  color: var(--text2);
+  cursor: pointer;
+  transition: color 0.15s;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--text1);
+}
+
+.tab.active {
+  color: var(--text0);
+  border-bottom-color: var(--blue);
+}
+
+.tab.aiActive {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
