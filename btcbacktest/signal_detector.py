@@ -2,6 +2,7 @@
 BTC Fade Signal Detector — live S4/S5 signal detection + mock trade resolution.
 Polls Binance 15m candles. No API key required.
 """
+from __future__ import annotations
 import logging
 import requests
 from dataclasses import dataclass

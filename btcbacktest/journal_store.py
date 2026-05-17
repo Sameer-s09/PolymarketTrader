@@ -3,6 +3,7 @@ Persistent journal for the BTC Fade signal detector.
 Append-only JSONL at data/fade_journal.jsonl — each line is one Signal record.
 Thread-safe via a single RLock.
 """
+from __future__ import annotations
 import json
 import os
 import threading
