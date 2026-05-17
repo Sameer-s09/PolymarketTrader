@@ -4,9 +4,13 @@ import type { WsMessage } from '../types/candle'
 
 const WS_URL = (() => {
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host  = window.location.hostname
-  const port  = (import.meta.env.VITE_WS_PORT as string | undefined) ?? '3002'
-  return `${proto}//${host}:${port}`
+  const port  = window.location.port
+  // Dev (Vite port 5173): connect directly to WS server on :3002
+  if (port && port !== '80' && port !== '443') {
+    return `${proto}//${window.location.hostname}:3002`
+  }
+  // Production: route through Nginx /ws → :3002
+  return `${proto}//${window.location.host}/ws`
 })()
 const BACKOFF = [1000, 2000, 4000, 8000, 16000, 30000]
 
