@@ -11,6 +11,13 @@
   min-width: 1200px;
 }
 
+@media (max-width: 900px) {
+  .shell {
+    width: 1200px;   /* fixed width — html handles the pan */
+    overflow: visible;
+  }
+}
+
 .body {
   display: flex;
   flex: 1;

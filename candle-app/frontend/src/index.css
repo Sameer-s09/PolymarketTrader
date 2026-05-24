@@ -46,6 +46,19 @@ html, body, #root {
   background: var(--bg0);
 }
 
+/* ── Mobile: allow horizontal pan across the 1200px desktop layout ── */
+@media (max-width: 900px) {
+  html {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  body, #root {
+    overflow: visible;
+    min-width: 1200px;   /* match .shell min-width so html scroll kicks in */
+    height: 100%;
+  }
+}
+
 button { font-family: var(--font-sans); }
 input  { font-family: var(--font-mono); }
 
