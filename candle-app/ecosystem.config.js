@@ -9,6 +9,7 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3001,
         JOURNAL_PATH: '/opt/vibe-trader/btcbacktest/data/fade_journal.jsonl',
+        MOCK_TRADES_PATH: '/opt/vibe-trader/btcbacktest/data/mock_trades.jsonl',
       },
       watch: false,
       max_memory_restart: '400M',

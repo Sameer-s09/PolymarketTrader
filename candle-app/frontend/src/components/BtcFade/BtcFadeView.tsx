@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { BtcFadeChart }   from './BtcFadeChart'
-import { BtcFadeJournal } from './BtcFadeJournal'
+import { BtcFadeChart }      from './BtcFadeChart'
+import { BtcFadeJournal }    from './BtcFadeJournal'
+import { BtcFadeMockTrades } from './BtcFadeMockTrades'
 import styles from './BtcFadeView.module.css'
 
-type SubTab = 'chart' | 'journal'
+type SubTab = 'chart' | 'journal' | 'mock'
 
 export function BtcFadeView() {
   const [sub, setSub] = useState<SubTab>('chart')
@@ -24,6 +25,12 @@ export function BtcFadeView() {
         >
           Journal
         </button>
+        <button
+          className={`${styles.subTab} ${sub === 'mock' ? styles.subTabActive : ''}`}
+          onClick={() => setSub('mock')}
+        >
+          Mock Trades
+        </button>
         <div className={styles.subTabSpacer} />
         <span className={styles.subTabHint}>
           <span style={{ color: '#e3b341' }}>▲▼</span> S4 &nbsp;
@@ -35,6 +42,7 @@ export function BtcFadeView() {
       <div className={styles.content}>
         {sub === 'chart'   && <BtcFadeChart />}
         {sub === 'journal' && <BtcFadeJournal />}
+        {sub === 'mock'    && <BtcFadeMockTrades />}
       </div>
     </div>
   )

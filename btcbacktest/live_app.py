@@ -12,14 +12,21 @@ from datetime import datetime, timezone, timedelta
 
 from flask import Flask, jsonify, render_template_string
 
-from signal_detector import fetch_15m_candles, detect_signal, resolve_signal, current_streak
+from signal_detector import fetch_15m_candles, detect_signal, resolve_signal, current_streak, Signal as _Signal
 from journal_store import JournalStore
+from polymarket_client import fetch_odds
+from mock_journal import MockJournal, MockTrade
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-app    = Flask(__name__)
-jstore = JournalStore()
+app        = Flask(__name__)
+jstore     = JournalStore()
+mock_store = MockJournal()
+
+# ── Filter constants for mock trading ────────────────────────────────────────
+MOCK_SKIP_SESSIONS = {"LONDON"}
+MOCK_SKIP_DAYS     = {"Saturday"}
 
 _status      = {}
 _status_lock = threading.Lock()
@@ -58,9 +65,43 @@ def _poll_loop() -> None:
                         f"{signal.entry_price:,.2f} | {signal.session} | "
                         f"EWR {signal.expected_wr:.1%}"
                     )
+                    # ── Mock trade: skip London & Saturday ───────────────────
+                    if signal.session not in MOCK_SKIP_SESSIONS and signal.day_of_week not in MOCK_SKIP_DAYS:
+                        poly = fetch_odds()
+                        if poly:
+                            is_up   = signal.direction == "UP"
+                            odds    = poly["oddsUp"]   if is_up else poly["oddsDown"]
+                            payout  = poly["payoutUp"] if is_up else poly["payoutDown"]
+                            mt = MockTrade(
+                                signal_id          = signal.signal_id,
+                                strategy           = signal.strategy,
+                                signal_time        = signal.signal_time,
+                                entry_candle_open  = signal.entry_candle_open,
+                                entry_candle_close = signal.entry_candle_close,
+                                direction          = signal.direction,
+                                streak_colour      = signal.streak_colour,
+                                streak_length      = signal.streak_length,
+                                session            = signal.session,
+                                day_of_week        = signal.day_of_week,
+                                entry_price        = signal.entry_price,
+                                poly_odds          = odds,
+                                poly_payout        = payout,
+                                poly_market_slug   = poly.get("slug", ""),
+                                poly_captured_at   = poly.get("lastUpdated", ""),
+                            )
+                            if mock_store.add(mt):
+                                log.info(
+                                    f"MOCK    {signal.strategy} {signal.direction} "
+                                    f"odds={odds:.3f} payout={payout:.3f}x "
+                                    f"slug={poly.get('slug','?')}"
+                                )
+                        else:
+                            log.warning(f"MOCK SKIP {signal.signal_id} — Polymarket odds unavailable")
+                    else:
+                        log.info(f"MOCK SKIP {signal.strategy} {signal.session}/{signal.day_of_week} (filtered)")
                 last_signal_id = signal.signal_id
 
-            # Resolve any pending trades
+            # Resolve pending main-journal trades
             for pending in jstore.get_pending():
                 resolved = resolve_signal(pending, candles)
                 if resolved:
@@ -68,6 +109,41 @@ def _poll_loop() -> None:
                     log.info(
                         f"CLOSED  {resolved.signal_id} -> {resolved.result} "
                         f"({resolved.directed_pct:+.3f}%)"
+                    )
+
+            # Resolve pending mock trades
+            for pm in mock_store.get_pending():
+                proxy = _Signal(
+                    signal_id          = pm.signal_id,
+                    strategy           = pm.strategy,
+                    signal_time        = pm.signal_time,
+                    entry_candle_open  = pm.entry_candle_open,
+                    entry_candle_close = pm.entry_candle_close,
+                    direction          = pm.direction,
+                    streak_colour      = pm.streak_colour,
+                    streak_length      = pm.streak_length,
+                    hour_utc           = 0,
+                    session            = pm.session,
+                    day_of_week        = pm.day_of_week,
+                    expected_wr        = 0.0,
+                    entry_price        = pm.entry_price,
+                )
+                resolved = resolve_signal(proxy, candles)
+                if resolved:
+                    pm.exit_price   = resolved.exit_price
+                    pm.directed_pct = resolved.directed_pct
+                    pm.result       = resolved.result
+                    if resolved.result == "WIN":
+                        pm.profit = round(pm.stake * (pm.poly_payout - 1.0), 2)
+                    elif resolved.result == "LOSS":
+                        pm.profit = -pm.stake
+                    else:
+                        pm.profit = 0.0
+                    pm.resolved_at = resolved.resolved_at
+                    mock_store.update(pm)
+                    log.info(
+                        f"MOCK CLOSED {pm.signal_id} -> {pm.result} "
+                        f"profit=${pm.profit:+.2f}"
                     )
 
             with _status_lock:
@@ -561,6 +637,14 @@ def api_journal():
 @app.route("/api/journal/recent")
 def api_journal_recent():
     return jsonify(jstore.get_all(limit=20))
+
+
+@app.route("/api/mock-trades")
+def api_mock_trades():
+    return jsonify({
+        "records": mock_store.get_all(),
+        "stats":   mock_store.stats(),
+    })
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

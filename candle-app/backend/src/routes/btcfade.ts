@@ -4,9 +4,11 @@ import path from 'path'
 
 const router = Router()
 
-const BINANCE_URL = 'https://api.binance.com/api/v3/klines'
-const JOURNAL_PATH = process.env.JOURNAL_PATH
+const BINANCE_URL   = 'https://api.binance.com/api/v3/klines'
+const JOURNAL_PATH  = process.env.JOURNAL_PATH
   ?? path.resolve('E:/Projects/vibecoding/claude/btcbacktest/data/fade_journal.jsonl')
+const MOCK_TRADES_PATH = process.env.MOCK_TRADES_PATH
+  ?? path.resolve('E:/Projects/vibecoding/claude/btcbacktest/data/mock_trades.jsonl')
 
 function colour(open: number, close: number): 'green' | 'red' | 'doji' {
   if (close > open) return 'green'
@@ -171,6 +173,80 @@ function wrWindow(resolved: any[], days: number, now: string): number | null {
   if (!w.length) return null
   const ww = w.filter((r) => r.result === 'WIN').length
   return +((ww / w.length) * 100).toFixed(1)
+}
+
+// ── GET /api/btcfade/mock-trades ─────────────────────────────────────────────
+router.get('/mock-trades', (_req, res) => {
+  try {
+    if (!fs.existsSync(MOCK_TRADES_PATH)) {
+      return res.json({ records: [], stats: emptyMockStats() })
+    }
+
+    const lines = fs.readFileSync(MOCK_TRADES_PATH, 'utf-8')
+      .trim().split('\n').filter(Boolean)
+    const records = lines
+      .map((l) => { try { return JSON.parse(l) } catch { return null } })
+      .filter(Boolean)
+      .reverse()   // newest first
+
+    res.json({ records, stats: buildMockStats(records) })
+  } catch (e) {
+    console.error('[btcfade] mock-trades error:', e)
+    res.status(500).json({ error: String(e) })
+  }
+})
+
+function emptyMockStats() {
+  return {
+    total: 0, wins: 0, losses: 0, win_rate: 0,
+    actual_pnl: 0,
+    avg_odds_win: null, avg_odds_loss: null,
+    s4: { total: 0, wins: 0, wr: 0, pnl: 0 },
+    s5: { total: 0, wins: 0, wr: 0, pnl: 0 },
+    sessions: {},
+  }
+}
+
+function buildMockStats(records: any[]) {
+  const resolved = records.filter((r) => r.result === 'WIN' || r.result === 'LOSS')
+  const total  = resolved.length
+  const wins   = resolved.filter((r) => r.result === 'WIN').length
+  const losses = total - wins
+  const actual_pnl = +resolved.reduce((s: number, r) => s + (r.profit ?? 0), 0).toFixed(2)
+
+  const avgOdds = (list: any[]) =>
+    list.length ? +(list.reduce((s: number, r) => s + (r.poly_odds ?? 0), 0) / list.length).toFixed(3) : null
+
+  const stratStats = (strat: string) => {
+    const lst = resolved.filter((r) => r.strategy.includes(strat))
+    const w   = lst.filter((r) => r.result === 'WIN').length
+    const pl  = +lst.reduce((s: number, r) => s + (r.profit ?? 0), 0).toFixed(2)
+    return { total: lst.length, wins: w, wr: lst.length ? +((w / lst.length) * 100).toFixed(1) : 0, pnl: pl }
+  }
+
+  const sessions: Record<string, { total: number; wins: number; wr: number; pnl: number }> = {}
+  for (const r of resolved) {
+    const s = r.session ?? '?'
+    if (!sessions[s]) sessions[s] = { total: 0, wins: 0, wr: 0, pnl: 0 }
+    sessions[s].total++
+    if (r.result === 'WIN') sessions[s].wins++
+    sessions[s].pnl += r.profit ?? 0
+  }
+  for (const s of Object.keys(sessions)) {
+    sessions[s].wr  = sessions[s].total ? +((sessions[s].wins / sessions[s].total) * 100).toFixed(1) : 0
+    sessions[s].pnl = +sessions[s].pnl.toFixed(2)
+  }
+
+  return {
+    total, wins, losses,
+    win_rate: total ? +((wins / total) * 100).toFixed(1) : 0,
+    actual_pnl,
+    avg_odds_win:  avgOdds(resolved.filter((r) => r.result === 'WIN')),
+    avg_odds_loss: avgOdds(resolved.filter((r) => r.result === 'LOSS')),
+    s4: stratStats('S4'),
+    s5: stratStats('S5'),
+    sessions,
+  }
 }
 
 export default router
