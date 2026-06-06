@@ -25,8 +25,62 @@ jstore     = JournalStore()
 mock_store = MockJournal()
 
 # ── Filter constants for mock trading ────────────────────────────────────────
-MOCK_SKIP_SESSIONS = {"LONDON"}
-MOCK_SKIP_DAYS     = {"Saturday"}
+MOCK_SKIP_SESSIONS  = {"LONDON"}
+MOCK_SKIP_DAYS      = {"Saturday"}
+MOCK_ODDS_DELAY_S   = 75          # seconds to wait before capturing odds (let new market settle)
+MOCK_ODDS_MIN       = 0.10        # reject odds below this — expiring market (losing side → ~0)
+MOCK_ODDS_MAX       = 0.90        # reject odds above this — market-maker ask only (winning side → ~1)
+
+
+def _delayed_mock_capture(signal) -> None:
+    """
+    Called 75s after signal detection in a daemon thread.
+    By then the previous 15m Polymarket market has fully settled and the
+    new period's market has real buyer bids — odds are meaningful.
+    """
+    try:
+        poly = fetch_odds()
+        if not poly:
+            log.warning(f"MOCK SKIP {signal.signal_id} — Polymarket unavailable after {MOCK_ODDS_DELAY_S}s delay")
+            return
+
+        is_up  = signal.direction == "UP"
+        odds   = poly["oddsUp"]   if is_up else poly["oddsDown"]
+        payout = poly["payoutUp"] if is_up else poly["payoutDown"]
+
+        # Sanity guard — reject stale/extreme odds even after delay
+        if odds < MOCK_ODDS_MIN or odds > MOCK_ODDS_MAX:
+            log.warning(
+                f"MOCK SKIP {signal.signal_id} — odds {odds:.3f} still outside "
+                f"[{MOCK_ODDS_MIN},{MOCK_ODDS_MAX}] after delay (stale market)"
+            )
+            return
+
+        mt = MockTrade(
+            signal_id          = signal.signal_id,
+            strategy           = signal.strategy,
+            signal_time        = signal.signal_time,
+            entry_candle_open  = signal.entry_candle_open,
+            entry_candle_close = signal.entry_candle_close,
+            direction          = signal.direction,
+            streak_colour      = signal.streak_colour,
+            streak_length      = signal.streak_length,
+            session            = signal.session,
+            day_of_week        = signal.day_of_week,
+            entry_price        = signal.entry_price,
+            poly_odds          = odds,
+            poly_payout        = payout,
+            poly_market_slug   = poly.get("slug", ""),
+            poly_captured_at   = poly.get("lastUpdated", ""),
+        )
+        if mock_store.add(mt):
+            log.info(
+                f"MOCK    {signal.strategy} {signal.direction} "
+                f"odds={odds:.3f} payout={payout:.3f}x "
+                f"slug={poly.get('slug', '?')} (captured +{MOCK_ODDS_DELAY_S}s)"
+            )
+    except Exception as exc:
+        log.error(f"MOCK CAPTURE ERROR {signal.signal_id}: {exc}")
 
 _status      = {}
 _status_lock = threading.Lock()
@@ -67,36 +121,14 @@ def _poll_loop() -> None:
                     )
                     # ── Mock trade: skip London & Saturday ───────────────────
                     if signal.session not in MOCK_SKIP_SESSIONS and signal.day_of_week not in MOCK_SKIP_DAYS:
-                        poly = fetch_odds()
-                        if poly:
-                            is_up   = signal.direction == "UP"
-                            odds    = poly["oddsUp"]   if is_up else poly["oddsDown"]
-                            payout  = poly["payoutUp"] if is_up else poly["payoutDown"]
-                            mt = MockTrade(
-                                signal_id          = signal.signal_id,
-                                strategy           = signal.strategy,
-                                signal_time        = signal.signal_time,
-                                entry_candle_open  = signal.entry_candle_open,
-                                entry_candle_close = signal.entry_candle_close,
-                                direction          = signal.direction,
-                                streak_colour      = signal.streak_colour,
-                                streak_length      = signal.streak_length,
-                                session            = signal.session,
-                                day_of_week        = signal.day_of_week,
-                                entry_price        = signal.entry_price,
-                                poly_odds          = odds,
-                                poly_payout        = payout,
-                                poly_market_slug   = poly.get("slug", ""),
-                                poly_captured_at   = poly.get("lastUpdated", ""),
-                            )
-                            if mock_store.add(mt):
-                                log.info(
-                                    f"MOCK    {signal.strategy} {signal.direction} "
-                                    f"odds={odds:.3f} payout={payout:.3f}x "
-                                    f"slug={poly.get('slug','?')}"
-                                )
-                        else:
-                            log.warning(f"MOCK SKIP {signal.signal_id} — Polymarket odds unavailable")
+                        # Delay 75s so the new Polymarket market has real bids
+                        t = threading.Timer(MOCK_ODDS_DELAY_S, _delayed_mock_capture, args=[signal])
+                        t.daemon = True
+                        t.start()
+                        log.info(
+                            f"MOCK    {signal.strategy} {signal.direction} "
+                            f"— odds capture scheduled in {MOCK_ODDS_DELAY_S}s"
+                        )
                     else:
                         log.info(f"MOCK SKIP {signal.strategy} {signal.session}/{signal.day_of_week} (filtered)")
                 last_signal_id = signal.signal_id
