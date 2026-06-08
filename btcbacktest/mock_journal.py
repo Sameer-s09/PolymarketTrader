@@ -26,6 +26,7 @@ class MockTrade:
     streak_length:      int           # 4 or 5
     session:            str
     day_of_week:        str
+    day_key:            str           # YYYY-MM-DD UTC — used for session-stop grouping
     entry_price:        float
 
     # Polymarket odds captured at signal time
@@ -90,6 +91,31 @@ class MockJournal:
         with self._lock:
             self._records[trade.signal_id] = asdict(trade)
             self._save_all()
+
+    def session_consecutive_losses(self, day_key: str, session: str) -> int:
+        """
+        Return the number of consecutive resolved LOSSes at the END of the
+        (day_key, session) block — i.e. how many back-to-back losses have
+        occurred so far in this session today.
+        Pending (unresolved) trades are ignored so a mid-session check
+        doesn't block future trades that are still open.
+        """
+        with self._lock:
+            block = [
+                r for r in self._records.values()
+                if r.get("day_key") == day_key and r.get("session") == session
+                and r.get("result") in ("WIN", "LOSS")
+            ]
+            if not block:
+                return 0
+            block.sort(key=lambda r: r["signal_time"])
+            consec = 0
+            for r in reversed(block):
+                if r["result"] == "LOSS":
+                    consec += 1
+                else:
+                    break
+            return consec
 
     def get_pending(self) -> list[MockTrade]:
         """Trades with entry_price but no result yet."""

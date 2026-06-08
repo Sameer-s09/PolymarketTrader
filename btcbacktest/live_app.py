@@ -32,13 +32,30 @@ MOCK_ODDS_MIN       = 0.10        # reject odds below this — expiring market (
 MOCK_ODDS_MAX       = 0.90        # reject odds above this — market-maker ask only (winning side → ~1)
 
 
-def _delayed_mock_capture(signal) -> None:
+def _signal_day_key(signal) -> str:
+    """Extract YYYY-MM-DD UTC from a signal's signal_time."""
+    return signal.signal_time[:10]
+
+
+def _delayed_mock_capture(signal, day_key: str) -> None:
     """
     Called 75s after signal detection in a daemon thread.
     By then the previous 15m Polymarket market has fully settled and the
     new period's market has real buyer bids — odds are meaningful.
+    Re-checks the 2-consecutive-loss session stop at capture time so that
+    a loss resolved during the 75s window is counted before we commit.
     """
     try:
+        # Re-check session stop — a trade from this session may have resolved
+        # during the 75s wait, pushing consecutive losses to 2.
+        consec = mock_store.session_consecutive_losses(day_key, signal.session)
+        if consec >= 2:
+            log.info(
+                f"MOCK SKIP {signal.signal_id} — 2-consec-loss stop still active "
+                f"at capture time ({signal.session} {day_key}, {consec} losses)"
+            )
+            return
+
         poly = fetch_odds()
         if not poly:
             log.warning(f"MOCK SKIP {signal.signal_id} — Polymarket unavailable after {MOCK_ODDS_DELAY_S}s delay")
@@ -51,7 +68,7 @@ def _delayed_mock_capture(signal) -> None:
         # Sanity guard — reject stale/extreme odds even after delay
         if odds < MOCK_ODDS_MIN or odds > MOCK_ODDS_MAX:
             log.warning(
-                f"MOCK SKIP {signal.signal_id} — odds {odds:.3f} still outside "
+                f"MOCK SKIP {signal.signal_id} — odds {odds:.3f} outside "
                 f"[{MOCK_ODDS_MIN},{MOCK_ODDS_MAX}] after delay (stale market)"
             )
             return
@@ -67,6 +84,7 @@ def _delayed_mock_capture(signal) -> None:
             streak_length      = signal.streak_length,
             session            = signal.session,
             day_of_week        = signal.day_of_week,
+            day_key            = day_key,
             entry_price        = signal.entry_price,
             poly_odds          = odds,
             poly_payout        = payout,
@@ -121,14 +139,23 @@ def _poll_loop() -> None:
                     )
                     # ── Mock trade: skip London & Saturday ───────────────────
                     if signal.session not in MOCK_SKIP_SESSIONS and signal.day_of_week not in MOCK_SKIP_DAYS:
-                        # Delay 75s so the new Polymarket market has real bids
-                        t = threading.Timer(MOCK_ODDS_DELAY_S, _delayed_mock_capture, args=[signal])
-                        t.daemon = True
-                        t.start()
-                        log.info(
-                            f"MOCK    {signal.strategy} {signal.direction} "
-                            f"— odds capture scheduled in {MOCK_ODDS_DELAY_S}s"
-                        )
+                        day_key = _signal_day_key(signal)
+                        consec  = mock_store.session_consecutive_losses(day_key, signal.session)
+                        if consec >= 2:
+                            log.info(
+                                f"MOCK SKIP {signal.strategy} {signal.session}/{day_key} "
+                                f"— 2-consec-loss session stop ({consec} losses)"
+                            )
+                        else:
+                            # Delay 75s so the new Polymarket market has real bids
+                            t = threading.Timer(MOCK_ODDS_DELAY_S, _delayed_mock_capture, args=[signal, day_key])
+                            t.daemon = True
+                            t.start()
+                            log.info(
+                                f"MOCK    {signal.strategy} {signal.direction} "
+                                f"— odds capture scheduled in {MOCK_ODDS_DELAY_S}s "
+                                f"(session losses so far: {consec})"
+                            )
                     else:
                         log.info(f"MOCK SKIP {signal.strategy} {signal.session}/{signal.day_of_week} (filtered)")
                 last_signal_id = signal.signal_id
