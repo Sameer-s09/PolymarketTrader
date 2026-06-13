@@ -16,6 +16,7 @@ from signal_detector import fetch_15m_candles, detect_signal, resolve_signal, cu
 from journal_store import JournalStore
 from polymarket_client import fetch_odds
 from mock_journal import MockJournal, MockTrade
+from telegram_notifier import alert_trade_placed, alert_trade_resolved
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -97,6 +98,23 @@ def _delayed_mock_capture(signal, day_key: str) -> None:
                 f"odds={odds:.3f} payout={payout:.3f}x "
                 f"slug={poly.get('slug', '?')} (captured +{MOCK_ODDS_DELAY_S}s)"
             )
+            try:
+                alert_trade_placed(
+                    strategy         = mt.strategy,
+                    direction        = mt.direction,
+                    session          = mt.session,
+                    day_of_week      = mt.day_of_week,
+                    streak_colour    = mt.streak_colour,
+                    streak_length    = mt.streak_length,
+                    entry_price      = mt.entry_price,
+                    poly_odds        = mt.poly_odds,
+                    poly_payout      = mt.poly_payout,
+                    poly_market_slug = mt.poly_market_slug,
+                    signal_time      = mt.signal_time,
+                    stake            = mt.stake,
+                )
+            except Exception as tg_exc:
+                log.warning(f"Telegram alert (placed) failed: {tg_exc}")
     except Exception as exc:
         log.error(f"MOCK CAPTURE ERROR {signal.signal_id}: {exc}")
 
@@ -204,6 +222,24 @@ def _poll_loop() -> None:
                         f"MOCK CLOSED {pm.signal_id} -> {pm.result} "
                         f"profit=${pm.profit:+.2f}"
                     )
+                    try:
+                        alert_trade_resolved(
+                            strategy     = pm.strategy,
+                            direction    = pm.direction,
+                            session      = pm.session,
+                            day_of_week  = pm.day_of_week,
+                            entry_price  = pm.entry_price,
+                            exit_price   = pm.exit_price,
+                            directed_pct = pm.directed_pct,
+                            poly_odds    = pm.poly_odds,
+                            poly_payout  = pm.poly_payout,
+                            result       = pm.result,
+                            profit       = pm.profit,
+                            signal_time  = pm.signal_time,
+                            resolved_at  = pm.resolved_at,
+                        )
+                    except Exception as tg_exc:
+                        log.warning(f"Telegram alert (resolved) failed: {tg_exc}")
 
             with _status_lock:
                 _status.update({
