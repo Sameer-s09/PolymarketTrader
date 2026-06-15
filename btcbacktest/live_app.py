@@ -757,10 +757,11 @@ def api_mock_trades():
     })
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+# ── Start poll thread at module level so gunicorn picks it up ─────────────────
+# (daemon=True means it dies automatically when the main process exits)
+_poller = threading.Thread(target=_poll_loop, daemon=True, name="fade-poller")
+_poller.start()
+log.info("BTC Fade Detector started — http://localhost:5050")
 
 if __name__ == "__main__":
-    t = threading.Thread(target=_poll_loop, daemon=True, name="fade-poller")
-    t.start()
-    log.info("BTC Fade Detector started — http://localhost:5050")
     app.run(host="0.0.0.0", port=5050, debug=False, use_reloader=False)

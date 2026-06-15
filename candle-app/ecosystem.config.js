@@ -18,8 +18,8 @@ module.exports = {
     },
     {
       name: 'vibe-flask',
-      script: 'python3',
-      args: 'live_app.py',
+      script: 'gunicorn',
+      args: '--workers 1 --bind 0.0.0.0:5050 --timeout 120 --access-logfile - live_app:app',
       cwd: '/opt/vibe-trader/btcbacktest',
       watch: false,
       max_memory_restart: '200M',
