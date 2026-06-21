@@ -30,7 +30,7 @@ MOCK_SKIP_SESSIONS  = {"LONDON"}
 MOCK_SKIP_DAYS      = {"Saturday"}
 MOCK_ODDS_DELAY_S   = 75          # seconds to wait before capturing odds (let new market settle)
 MOCK_ODDS_MIN       = 0.10        # reject odds below this — expiring market (losing side → ~0)
-MOCK_ODDS_MAX       = 0.90        # reject odds above this — market-maker ask only (winning side → ~1)
+MOCK_ODDS_MAX       = 0.55        # reject odds above this — payout compression kills EV above 55%
 
 
 def _signal_day_key(signal) -> str:
