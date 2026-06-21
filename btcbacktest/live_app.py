@@ -47,21 +47,6 @@ def _delayed_mock_capture(signal, day_key: str) -> None:
     a loss resolved during the 75s window is counted before we commit.
     """
     try:
-        # Guard: if the prediction candle has already closed, the poll loop ran
-        # late and the odds we'd capture now belong to a different Polymarket
-        # market — skip to avoid mismatched data.
-        now = datetime.now(timezone.utc)
-        entry_close = datetime.fromisoformat(
-            signal.entry_candle_close.replace("Z", "+00:00")
-        )
-        if now >= entry_close:
-            log.warning(
-                f"MOCK SKIP {signal.signal_id} — detected late, prediction candle "
-                f"already closed at {signal.entry_candle_close[:16]} UTC "
-                f"(now {now.strftime('%H:%M')} UTC). Odds would mismatch."
-            )
-            return
-
         # Re-check session stop — a trade from this session may have resolved
         # during the 75s wait, pushing consecutive losses to 2.
         consec = mock_store.session_consecutive_losses(day_key, signal.session)

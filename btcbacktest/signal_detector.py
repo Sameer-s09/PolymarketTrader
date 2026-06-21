@@ -144,15 +144,16 @@ class Signal:
 def detect_signal(candles: list[dict]) -> Optional[Signal]:
     """
     Given closed 15m candles (oldest first), detect an S4 or S5 fade signal.
-    The LAST candle in the list is the prediction candle (just opened).
-    The signal fires when the N candles before it form a streak.
+    Fires when the Nth streak candle (c5) closes — the prediction candle is
+    still live. This allows Polymarket odds to be captured mid-prediction-candle
+    (via the 75s delay) so they correspond to the correct market window.
     """
     if len(candles) < 6:
         return None
 
-    # c6 = prediction candle (most recent closed), c5..c1 = streak candidates
-    c6, c5, c4, c3, c2, c1 = (candles[-1], candles[-2], candles[-3],
-                                candles[-4], candles[-5], candles[-6])
+    # c5 = last closed candle (final streak candle); prediction candle not yet closed
+    c5, c4, c3, c2, c1 = (candles[-1], candles[-2], candles[-3],
+                            candles[-4], candles[-5])
 
     streak_col = _colour(c5["open"], c5["close"])
     if streak_col == "doji":
@@ -174,8 +175,9 @@ def detect_signal(candles: list[dict]) -> Optional[Signal]:
     day = _day_name(dt)
 
     signal_time_str  = datetime.fromtimestamp(c5["close_time_ms"] / 1000, tz=timezone.utc).isoformat()
-    entry_open_str   = c6["dt"].isoformat()
-    entry_close_str  = datetime.fromtimestamp(c6["close_time_ms"] / 1000, tz=timezone.utc).isoformat()
+    # Prediction candle opens immediately after c5 closes, runs for 15 minutes
+    entry_open_str   = datetime.fromtimestamp((c5["close_time_ms"] + 1) / 1000, tz=timezone.utc).isoformat()
+    entry_close_str  = datetime.fromtimestamp((c5["close_time_ms"] + 900_000) / 1000, tz=timezone.utc).isoformat()
     signal_id        = f"{strat.replace('-','')}-{datetime.fromisoformat(signal_time_str).strftime('%Y%m%dT%H%M%SZ')}"
 
     return Signal(
@@ -191,7 +193,7 @@ def detect_signal(candles: list[dict]) -> Optional[Signal]:
         session=session,
         day_of_week=day,
         expected_wr=_expected_wr(strat_short, session, day, hour),
-        entry_price=c6["open"],
+        entry_price=c5["close"],   # = prediction candle open (shared boundary price)
     )
 
 
