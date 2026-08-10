@@ -12,7 +12,7 @@ from datetime import datetime, timezone, timedelta
 
 from flask import Flask, jsonify, render_template_string
 
-from signal_detector import fetch_15m_candles, detect_signal, resolve_signal, current_streak, Signal as _Signal
+from signal_detector import fetch_15m_candles, detect_signal, resolve_signal, current_streak, compute_adx, Signal as _Signal
 from journal_store import JournalStore
 from polymarket_client import fetch_odds
 from mock_journal import MockJournal, MockTrade
@@ -405,6 +405,7 @@ HTML = r"""<!DOCTYPE html>
 <div class="tabs">
   <div class="tab active" data-tab="live">Live Signals</div>
   <div class="tab" data-tab="journal">Journal</div>
+  <div class="tab" data-tab="chart">Chart</div>
 </div>
 
 <!-- ══ LIVE PANEL ══════════════════════════════════════════════════════════ -->
@@ -480,6 +481,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     tab.classList.add('active');
     document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
     if (tab.dataset.tab === 'journal') renderJournal();
+    if (tab.dataset.tab === 'chart') initChart();
   });
 });
 
@@ -704,6 +706,108 @@ document.getElementById('filter-row').addEventListener('click', e => {
 fetchAll();
 setInterval(fetchAll, 60_000);   // refresh every 60s to match poll cycle
 </script>
+
+<!-- ══ CHART PANEL ════════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-chart">
+  <div style="display:flex;align-items:center;gap:16px;padding-bottom:10px;flex-wrap:wrap;">
+    <span class="section-title" style="margin:0">BTCUSDT 15m</span>
+    <div style="display:flex;gap:14px;font-size:11px;margin-left:auto;">
+      <span><span style="display:inline-block;width:18px;height:2px;background:#bc8cff;vertical-align:middle;margin-right:4px;"></span>ADX(14)</span>
+      <span><span style="display:inline-block;width:18px;height:2px;background:var(--green);vertical-align:middle;margin-right:4px;"></span>+DI</span>
+      <span><span style="display:inline-block;width:18px;height:2px;background:var(--red);vertical-align:middle;margin-right:4px;"></span>−DI</span>
+      <span id="chart-adx-val" style="color:#bc8cff;font-weight:600;"></span>
+    </div>
+  </div>
+  <div id="price-chart" style="border:1px solid var(--border);border-radius:6px;overflow:hidden;"></div>
+  <div style="height:4px;"></div>
+  <div id="adx-chart" style="border:1px solid var(--border);border-radius:6px;overflow:hidden;"></div>
+</div>
+
+<script src="https://unpkg.com/lightweight-charts@4.1.4/dist/lightweight-charts.standalone.production.js"></script>
+<script>
+let _chartReady = false;
+
+async function initChart() {
+  if (_chartReady) return;
+  _chartReady = true;
+
+  const priceDiv = document.getElementById('price-chart');
+  const adxDiv   = document.getElementById('adx-chart');
+
+  const base = {
+    layout: { background: { color: '#0d1117' }, textColor: '#e6edf3' },
+    grid: { vertLines: { color: '#30363d' }, horzLines: { color: '#30363d' } },
+    rightPriceScale: { borderColor: '#30363d' },
+    handleScroll: true, handleScale: true,
+  };
+
+  const mainChart = LightweightCharts.createChart(priceDiv, {
+    ...base,
+    width: priceDiv.clientWidth, height: 360,
+    timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#30363d' },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+  });
+
+  const adxChart = LightweightCharts.createChart(adxDiv, {
+    ...base,
+    width: adxDiv.clientWidth, height: 160,
+    timeScale: { visible: false, borderColor: '#30363d' },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+  });
+
+  const candleSeries = mainChart.addCandlestickSeries({
+    upColor: '#3fb950', downColor: '#f85149',
+    borderUpColor: '#3fb950', borderDownColor: '#f85149',
+    wickUpColor: '#3fb950', wickDownColor: '#f85149',
+  });
+
+  const adxLine     = adxChart.addLineSeries({ color: '#bc8cff', lineWidth: 2, title: 'ADX' });
+  const plusDiLine  = adxChart.addLineSeries({ color: '#3fb950', lineWidth: 1, title: '+DI' });
+  const minusDiLine = adxChart.addLineSeries({ color: '#f85149', lineWidth: 1, title: '−DI' });
+
+  adxLine.createPriceLine({ price: 25, color: '#8b949e', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '25' });
+
+  let _syncing = false;
+  mainChart.timeScale().subscribeVisibleTimeRangeChange(range => {
+    if (_syncing) return; _syncing = true;
+    adxChart.timeScale().setVisibleRange(range);
+    _syncing = false;
+  });
+  adxChart.timeScale().subscribeVisibleTimeRangeChange(range => {
+    if (_syncing) return; _syncing = true;
+    mainChart.timeScale().setVisibleRange(range);
+    _syncing = false;
+  });
+
+  adxChart.subscribeCrosshairMove(param => {
+    if (param.time) {
+      const v = param.seriesData.get(adxLine);
+      if (v) document.getElementById('chart-adx-val').textContent = 'ADX ' + v.value.toFixed(1);
+    }
+  });
+
+  const data = await fetch('/api/chart').then(r => r.json());
+
+  candleSeries.setData(data.candles);
+  adxLine.setData(data.adx.map(a => ({ time: a.time, value: a.adx })));
+  plusDiLine.setData(data.adx.map(a => ({ time: a.time, value: a.plus_di })));
+  minusDiLine.setData(data.adx.map(a => ({ time: a.time, value: a.minus_di })));
+
+  mainChart.timeScale().fitContent();
+  adxChart.timeScale().fitContent();
+
+  if (data.adx.length) {
+    const last = data.adx[data.adx.length - 1];
+    document.getElementById('chart-adx-val').textContent = 'ADX ' + last.adx.toFixed(1);
+  }
+
+  const ro = new ResizeObserver(() => {
+    mainChart.applyOptions({ width: priceDiv.clientWidth });
+    adxChart.applyOptions({ width: adxDiv.clientWidth });
+  });
+  ro.observe(priceDiv);
+}
+</script>
 </body>
 </html>"""
 
@@ -742,11 +846,28 @@ def api_mock_trades():
     })
 
 
+@app.route("/api/chart")
+def api_chart():
+    candles = fetch_15m_candles(limit=100)
+    adx_data = compute_adx(candles)
+    candle_data = [
+        {
+            "time":  c["open_time_ms"] // 1000,
+            "open":  c["open"],
+            "high":  c["high"],
+            "low":   c["low"],
+            "close": c["close"],
+        }
+        for c in candles
+    ]
+    return jsonify({"candles": candle_data, "adx": adx_data})
+
+
 # ── Start poll thread at module level so gunicorn picks it up ─────────────────
 # (daemon=True means it dies automatically when the main process exits)
 _poller = threading.Thread(target=_poll_loop, daemon=True, name="fade-poller")
 _poller.start()
-log.info("BTC Fade Detector started — http://localhost:5050")
+log.info("BTC Fade Detector started — http://localhost:5200")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5050, debug=False, use_reloader=False)
+    app.run(host="127.0.0.1", port=5200, debug=False, use_reloader=False)

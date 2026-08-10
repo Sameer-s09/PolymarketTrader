@@ -197,6 +197,72 @@ def detect_signal(candles: list[dict]) -> Optional[Signal]:
     )
 
 
+def compute_adx(candles: list[dict], period: int = 14) -> list[dict]:
+    """Return ADX, +DI, -DI per candle using Wilder smoothing."""
+    n = len(candles)
+    if n < period + 2:
+        return []
+
+    tr_list, pdm_list, mdm_list = [], [], []
+    for i in range(1, n):
+        H, L = candles[i]["high"], candles[i]["low"]
+        pH, pL, pC = candles[i-1]["high"], candles[i-1]["low"], candles[i-1]["close"]
+        tr  = max(H - L, abs(H - pC), abs(L - pC))
+        up, dn = H - pH, pL - L
+        tr_list.append(tr)
+        pdm_list.append(up if up > dn and up > 0 else 0.0)
+        mdm_list.append(dn if dn > up and dn > 0 else 0.0)
+
+    if len(tr_list) < period:
+        return []
+
+    sm_tr  = sum(tr_list[:period])
+    sm_pdm = sum(pdm_list[:period])
+    sm_mdm = sum(mdm_list[:period])
+
+    def _step(sp, sm, st):
+        pdi  = 100.0 * sp / st if st else 0.0
+        mdi  = 100.0 * sm / st if st else 0.0
+        denom = pdi + mdi
+        return pdi, mdi, (100.0 * abs(pdi - mdi) / denom if denom else 0.0)
+
+    dx_vals, pdi_vals, mdi_vals, c_idxs = [], [], [], []
+    pdi, mdi, dx = _step(sm_pdm, sm_mdm, sm_tr)
+    dx_vals.append(dx); pdi_vals.append(pdi); mdi_vals.append(mdi); c_idxs.append(period)
+
+    for i in range(period, len(tr_list)):
+        sm_tr  = sm_tr  - sm_tr  / period + tr_list[i]
+        sm_pdm = sm_pdm - sm_pdm / period + pdm_list[i]
+        sm_mdm = sm_mdm - sm_mdm / period + mdm_list[i]
+        pdi, mdi, dx = _step(sm_pdm, sm_mdm, sm_tr)
+        dx_vals.append(dx); pdi_vals.append(pdi); mdi_vals.append(mdi); c_idxs.append(i + 1)
+
+    if len(dx_vals) < period:
+        return []
+
+    adx_val = sum(dx_vals[:period]) / period
+    results = []
+    ci = c_idxs[period - 1]
+    results.append({
+        "time": candles[ci]["open_time_ms"] // 1000,
+        "adx": round(adx_val, 2),
+        "plus_di": round(pdi_vals[period - 1], 2),
+        "minus_di": round(mdi_vals[period - 1], 2),
+    })
+
+    for i in range(period, len(dx_vals)):
+        adx_val = (adx_val * (period - 1) + dx_vals[i]) / period
+        ci = c_idxs[i]
+        results.append({
+            "time": candles[ci]["open_time_ms"] // 1000,
+            "adx": round(adx_val, 2),
+            "plus_di": round(pdi_vals[i], 2),
+            "minus_di": round(mdi_vals[i], 2),
+        })
+
+    return results
+
+
 def resolve_signal(signal: Signal, candles: list[dict]) -> Optional[Signal]:
     """
     Attempt to fill exit_price and result for a pending signal.
