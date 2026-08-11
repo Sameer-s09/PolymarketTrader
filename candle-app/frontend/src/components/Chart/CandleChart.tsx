@@ -222,16 +222,20 @@ export function CandleChart() {
 
       // Sync scroll/zoom with main chart
       let syncing = false
-      chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
-        if (syncing || !range) return
+      chart.timeScale().subscribeVisibleTimeRangeChange(() => {
+        if (syncing) return
+        const range = chart.timeScale().getVisibleRange()
+        if (!range) return
         syncing = true
-        adxChart.timeScale().setVisibleRange(range)
+        try { adxChart.timeScale().setVisibleRange(range) } catch { /* ignore */ }
         syncing = false
       })
-      adxChart.timeScale().subscribeVisibleTimeRangeChange((range) => {
-        if (syncing || !range) return
+      adxChart.timeScale().subscribeVisibleTimeRangeChange(() => {
+        if (syncing) return
+        const range = adxChart.timeScale().getVisibleRange()
+        if (!range) return
         syncing = true
-        chart.timeScale().setVisibleRange(range)
+        try { chart.timeScale().setVisibleRange(range) } catch { /* ignore */ }
         syncing = false
       })
     }
