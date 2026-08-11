@@ -3,6 +3,7 @@ import {
   createChart,
   ColorType,
   CrosshairMode,
+  LineStyle,
   type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
@@ -17,8 +18,53 @@ interface StreakInfo { length: number; colour: 'green' | 'red' | 'doji' }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type JournalRecord = Record<string, any>
 
-const S4_COLOR = '#e3b341'   // amber
-const S5_COLOR = '#00d4ff'   // cyan
+const S4_COLOR = '#e3b341'
+const S5_COLOR = '#00d4ff'
+
+interface ADXPoint { time: UTCTimestamp; adx: number; plusDI: number; minusDI: number }
+
+function computeADX(candles: Candle[], period = 14): ADXPoint[] {
+  const n = candles.length
+  if (n < period + 2) return []
+  const trL: number[] = [], pdL: number[] = [], mdL: number[] = []
+  for (let i = 1; i < n; i++) {
+    const { high: H, low: L } = candles[i]
+    const { high: pH, low: pL, close: pC } = candles[i - 1]
+    const tr = Math.max(H - L, Math.abs(H - pC), Math.abs(L - pC))
+    const up = H - pH, dn = pL - L
+    trL.push(tr)
+    pdL.push(up > dn && up > 0 ? up : 0)
+    mdL.push(dn > up && dn > 0 ? dn : 0)
+  }
+  if (trL.length < period) return []
+  let smTR = trL.slice(0, period).reduce((a, b) => a + b, 0)
+  let smPD = pdL.slice(0, period).reduce((a, b) => a + b, 0)
+  let smMD = mdL.slice(0, period).reduce((a, b) => a + b, 0)
+  const _s = (sp: number, sm: number, st: number) => {
+    const pdi = st ? (100 * sp) / st : 0, mdi = st ? (100 * sm) / st : 0
+    const den = pdi + mdi
+    return { pdi, mdi, dx: den ? (100 * Math.abs(pdi - mdi)) / den : 0 }
+  }
+  const dxV: number[] = [], pdiV: number[] = [], mdiV: number[] = [], cI: number[] = []
+  let { pdi, mdi, dx } = _s(smPD, smMD, smTR)
+  dxV.push(dx); pdiV.push(pdi); mdiV.push(mdi); cI.push(period)
+  for (let i = period; i < trL.length; i++) {
+    smTR = smTR - smTR / period + trL[i]
+    smPD = smPD - smPD / period + pdL[i]
+    smMD = smMD - smMD / period + mdL[i]
+    ;({ pdi, mdi, dx } = _s(smPD, smMD, smTR))
+    dxV.push(dx); pdiV.push(pdi); mdiV.push(mdi); cI.push(i + 1)
+  }
+  if (dxV.length < period) return []
+  let adxVal = dxV.slice(0, period).reduce((a, b) => a + b, 0) / period
+  const out: ADXPoint[] = []
+  out.push({ time: candles[cI[period - 1]].time as UTCTimestamp, adx: adxVal, plusDI: pdiV[period - 1], minusDI: mdiV[period - 1] })
+  for (let i = period; i < dxV.length; i++) {
+    adxVal = (adxVal * (period - 1) + dxV[i]) / period
+    out.push({ time: candles[cI[i]].time as UTCTimestamp, adx: adxVal, plusDI: pdiV[i], minusDI: mdiV[i] })
+  }
+  return out
+}
 
 function mapToFadeTrade(r: JournalRecord): FadeTrade {
   return {
@@ -38,6 +84,12 @@ export function BtcFadeChart() {
   const chartRef      = useRef<IChartApi | null>(null)
   const seriesRef     = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const primitiveRef  = useRef<FadeOverlayPrimitive | null>(null)
+
+  const adxContainerRef = useRef<HTMLDivElement>(null)
+  const adxChartRef     = useRef<IChartApi | null>(null)
+  const adxLineRef      = useRef<ISeriesApi<'Line'> | null>(null)
+  const plusDIRef       = useRef<ISeriesApi<'Line'> | null>(null)
+  const minusDIRef      = useRef<ISeriesApi<'Line'> | null>(null)
 
   const [streak, setStreak]         = useState<StreakInfo | null>(null)
   const [loading, setLoading]       = useState(true)
@@ -74,6 +126,14 @@ export function BtcFadeChart() {
         close: c.close,
       }))
       seriesRef.current.setData(candleData)
+
+      // ADX pane
+      if (adxLineRef.current && plusDIRef.current && minusDIRef.current) {
+        const pts = computeADX(data.candles)
+        adxLineRef.current.setData(pts.map((p) => ({ time: p.time, value: p.adx })))
+        plusDIRef.current.setData(pts.map((p) => ({ time: p.time, value: p.plusDI })))
+        minusDIRef.current.setData(pts.map((p) => ({ time: p.time, value: p.minusDI })))
+      }
 
       // Build S4/S5 signal markers (arrows on last streak candle)
       const markers = data.signals
@@ -176,8 +236,50 @@ export function BtcFadeChart() {
           height: containerRef.current.clientHeight,
         })
       }
+      if (adxContainerRef.current && adxChartRef.current) {
+        adxChartRef.current.applyOptions({ width: adxContainerRef.current.clientWidth })
+      }
     })
     ro.observe(containerRef.current)
+
+    // ── ADX sub-pane ─────────────────────────────────────────────────────────
+    if (adxContainerRef.current) {
+      const adxChart = createChart(adxContainerRef.current, {
+        layout: { background: { type: ColorType.Solid, color: '#0d1117' }, textColor: '#8b949e', fontSize: 11 },
+        grid: { vertLines: { color: '#1c2128' }, horzLines: { color: '#1c2128' } },
+        crosshair: { mode: CrosshairMode.Normal, vertLine: { color: '#30363d', labelBackgroundColor: '#161b22' }, horzLine: { color: '#30363d', labelBackgroundColor: '#161b22' } },
+        rightPriceScale: { borderColor: '#30363d' },
+        timeScale: { visible: false, borderColor: '#30363d' },
+        handleScroll: true,
+        handleScale: true,
+        width:  adxContainerRef.current.clientWidth,
+        height: adxContainerRef.current.clientHeight,
+      })
+      adxChartRef.current = adxChart
+
+      adxLineRef.current = adxChart.addLineSeries({ color: '#bc8cff', lineWidth: 2, priceLineVisible: false, lastValueVisible: true, title: 'ADX' })
+      plusDIRef.current  = adxChart.addLineSeries({ color: '#3fb950', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: '+DI' })
+      minusDIRef.current = adxChart.addLineSeries({ color: '#f85149', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: '-DI' })
+      adxLineRef.current.createPriceLine({ price: 25, color: '#8b949e', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: '25' })
+
+      let syncing = false
+      chart.timeScale().subscribeVisibleTimeRangeChange(() => {
+        if (syncing) return
+        const range = chart.timeScale().getVisibleRange()
+        if (!range) return
+        syncing = true
+        try { adxChart.timeScale().setVisibleRange(range) } catch { /* ignore */ }
+        syncing = false
+      })
+      adxChart.timeScale().subscribeVisibleTimeRangeChange(() => {
+        if (syncing) return
+        const range = adxChart.timeScale().getVisibleRange()
+        if (!range) return
+        syncing = true
+        try { chart.timeScale().setVisibleRange(range) } catch { /* ignore */ }
+        syncing = false
+      })
+    }
 
     fetchAndRender()
 
@@ -187,6 +289,11 @@ export function BtcFadeChart() {
       chartRef.current     = null
       seriesRef.current    = null
       primitiveRef.current = null
+      adxChartRef.current?.remove()
+      adxChartRef.current = null
+      adxLineRef.current  = null
+      plusDIRef.current   = null
+      minusDIRef.current  = null
     }
   }, [fetchAndRender])
 
@@ -237,6 +344,7 @@ export function BtcFadeChart() {
 
       {/* Chart */}
       <div ref={containerRef} className={styles.chartContainer} />
+      <div ref={adxContainerRef} className={styles.adxPane} />
 
       {loading && <div className={styles.chartOverlay}>Loading candles&hellip;</div>}
       {error   && <div className={styles.chartOverlay} style={{ color: '#f85149' }}>{error}</div>}

@@ -3,7 +3,6 @@ import {
   createChart,
   ColorType,
   CrosshairMode,
-  LineStyle,
   type IChartApi,
   type ISeriesApi,
   type DeepPartial,
@@ -35,61 +34,6 @@ function computeSMA(
   return out
 }
 
-interface ADXPoint { time: UTCTimestamp; adx: number; plusDI: number; minusDI: number }
-
-function computeADX(
-  candles: Array<{ time: number; high: number; low: number; close: number }>,
-  period = 14,
-): ADXPoint[] {
-  const n = candles.length
-  if (n < period + 2) return []
-
-  const trList: number[] = [], pdmList: number[] = [], mdmList: number[] = []
-  for (let i = 1; i < n; i++) {
-    const { high: H, low: L } = candles[i]
-    const { high: pH, low: pL, close: pC } = candles[i - 1]
-    const tr = Math.max(H - L, Math.abs(H - pC), Math.abs(L - pC))
-    const up = H - pH, dn = pL - L
-    trList.push(tr)
-    pdmList.push(up > dn && up > 0 ? up : 0)
-    mdmList.push(dn > up && dn > 0 ? dn : 0)
-  }
-  if (trList.length < period) return []
-
-  let smTR  = trList.slice(0, period).reduce((a, b) => a + b, 0)
-  let smPDM = pdmList.slice(0, period).reduce((a, b) => a + b, 0)
-  let smMDM = mdmList.slice(0, period).reduce((a, b) => a + b, 0)
-
-  const _step = (sp: number, sm: number, st: number) => {
-    const pdi = st ? (100 * sp) / st : 0
-    const mdi = st ? (100 * sm) / st : 0
-    const den = pdi + mdi
-    return { pdi, mdi, dx: den ? (100 * Math.abs(pdi - mdi)) / den : 0 }
-  }
-
-  const dxV: number[] = [], pdiV: number[] = [], mdiV: number[] = [], cIdx: number[] = []
-  let { pdi, mdi, dx } = _step(smPDM, smMDM, smTR)
-  dxV.push(dx); pdiV.push(pdi); mdiV.push(mdi); cIdx.push(period)
-
-  for (let i = period; i < trList.length; i++) {
-    smTR  = smTR  - smTR  / period + trList[i]
-    smPDM = smPDM - smPDM / period + pdmList[i]
-    smMDM = smMDM - smMDM / period + mdmList[i]
-    ;({ pdi, mdi, dx } = _step(smPDM, smMDM, smTR))
-    dxV.push(dx); pdiV.push(pdi); mdiV.push(mdi); cIdx.push(i + 1)
-  }
-  if (dxV.length < period) return []
-
-  let adxVal = dxV.slice(0, period).reduce((a, b) => a + b, 0) / period
-  const out: ADXPoint[] = []
-  out.push({ time: candles[cIdx[period - 1]].time as UTCTimestamp, adx: adxVal, plusDI: pdiV[period - 1], minusDI: mdiV[period - 1] })
-  for (let i = period; i < dxV.length; i++) {
-    adxVal = (adxVal * (period - 1) + dxV[i]) / period
-    out.push({ time: candles[cIdx[i]].time as UTCTimestamp, adx: adxVal, plusDI: pdiV[i], minusDI: mdiV[i] })
-  }
-  return out
-}
-
 function lastSMAPoint(
   candles: Array<{ time: number; close: number }>,
   liveClose: number,
@@ -111,11 +55,6 @@ export function CandleChart() {
   const primitiveRef    = useRef<OverlayPrimitive | null>(null)
   const scrolledRef     = useRef(false)
 
-  const adxContainerRef = useRef<HTMLDivElement>(null)
-  const adxChartRef     = useRef<IChartApi | null>(null)
-  const adxLineRef      = useRef<ISeriesApi<'Line'> | null>(null)
-  const plusDIRef       = useRef<ISeriesApi<'Line'> | null>(null)
-  const minusDIRef      = useRef<ISeriesApi<'Line'> | null>(null)
 
   const candles       = useAppStore((s) => s.candles)
   const currentCandle = useAppStore((s) => s.currentCandle)
@@ -193,52 +132,8 @@ export function CandleChart() {
           height: containerRef.current.clientHeight,
         })
       }
-      if (adxContainerRef.current && adxChartRef.current) {
-        adxChartRef.current.applyOptions({ width: adxContainerRef.current.clientWidth })
-      }
     })
     observer.observe(containerRef.current)
-
-    // ── ADX sub-pane ─────────────────────────────────────────────────────────
-    if (adxContainerRef.current) {
-      const adxChart = createChart(adxContainerRef.current, {
-        layout: { background: { type: ColorType.Solid, color: '#080d14' }, textColor: '#647080' },
-        grid: { vertLines: { color: '#121a28' }, horzLines: { color: '#121a28' } },
-        crosshair: { mode: CrosshairMode.Normal, vertLine: { color: '#233047', width: 1, style: 1 }, horzLine: { color: '#233047', width: 1, style: 1 } },
-        rightPriceScale: { borderColor: '#233047', textColor: '#647080' },
-        timeScale: { visible: false, borderColor: '#233047' },
-        handleScroll: true,
-        handleScale: true,
-        width:  adxContainerRef.current.clientWidth,
-        height: adxContainerRef.current.clientHeight,
-      })
-      adxChartRef.current = adxChart
-
-      adxLineRef.current = adxChart.addLineSeries({ color: '#8f5fcf', lineWidth: 2, priceLineVisible: false, lastValueVisible: true, title: 'ADX' })
-      plusDIRef.current  = adxChart.addLineSeries({ color: '#22c97a', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: '+DI' })
-      minusDIRef.current = adxChart.addLineSeries({ color: '#e8503a', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: '-DI' })
-
-      adxLineRef.current.createPriceLine({ price: 25, color: '#647080', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: '25' })
-
-      // Sync scroll/zoom with main chart
-      let syncing = false
-      chart.timeScale().subscribeVisibleTimeRangeChange(() => {
-        if (syncing) return
-        const range = chart.timeScale().getVisibleRange()
-        if (!range) return
-        syncing = true
-        try { adxChart.timeScale().setVisibleRange(range) } catch { /* ignore */ }
-        syncing = false
-      })
-      adxChart.timeScale().subscribeVisibleTimeRangeChange(() => {
-        if (syncing) return
-        const range = adxChart.timeScale().getVisibleRange()
-        if (!range) return
-        syncing = true
-        try { chart.timeScale().setVisibleRange(range) } catch { /* ignore */ }
-        syncing = false
-      })
-    }
 
     return () => {
       observer.disconnect()
@@ -249,11 +144,6 @@ export function CandleChart() {
       chart.remove()
       chartRef.current  = null
       seriesRef.current = null
-      adxChartRef.current?.remove()
-      adxChartRef.current = null
-      adxLineRef.current  = null
-      plusDIRef.current   = null
-      minusDIRef.current  = null
     }
   }, [])
 
@@ -277,14 +167,6 @@ export function CandleChart() {
     MA_CONFIGS.forEach((cfg, i) => {
       maSeriesRef.current[i]?.setData(computeSMA(sorted, cfg.period))
     })
-
-    // ADX
-    if (adxLineRef.current && plusDIRef.current && minusDIRef.current) {
-      const adxPoints = computeADX(sorted)
-      adxLineRef.current.setData(adxPoints.map((p) => ({ time: p.time, value: p.adx })))
-      plusDIRef.current.setData(adxPoints.map((p) => ({ time: p.time, value: p.plusDI })))
-      minusDIRef.current.setData(adxPoints.map((p) => ({ time: p.time, value: p.minusDI })))
-    }
 
     if (!scrolledRef.current) {
       chartRef.current?.timeScale().scrollToRealTime()
@@ -348,7 +230,6 @@ export function CandleChart() {
   return (
     <div className={styles.wrapper}>
       <div ref={containerRef} className={styles.chart} />
-      <div ref={adxContainerRef} className={styles.adxPane} />
     </div>
   )
 }
